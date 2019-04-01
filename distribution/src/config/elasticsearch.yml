@@ -14,7 +14,7 @@
 #
 # Use a descriptive name for your cluster:
 #
-#cluster.name: my-application
+cluster.name: wj
 #
 # ------------------------------------ Node ------------------------------------
 #
@@ -30,11 +30,12 @@
 #
 # Path to directory where to store the data (separate multiple locations by comma):
 #
-${path.data}
+path:
+  data: D:\program_data\es\data
+  logs: D:\program_data\es\logs
 #
 # Path to log files:
 #
-${path.logs}
 #
 # ----------------------------------- Memory -----------------------------------
 #
