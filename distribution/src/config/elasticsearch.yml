@@ -87,3 +87,8 @@ path:
 # Require explicit names when deleting indices:
 #
 #action.destructive_requires_name: true
+
+#  -Des.path.conf=D:\idea_workspace\elasticsearch\distribution\src\config
+#  -Des.path.home=D:\idea_workspace\elasticsearch
+#  -Djava.security.policy=D:\idea_workspace\elasticsearch\distribution\src\config\security.policy
+#  -Dlog4j2.disable.jmx=true
