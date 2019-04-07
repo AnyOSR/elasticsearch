@@ -58,12 +58,15 @@ public abstract class AbstractScopedSettings {
     protected final Logger logger = LogManager.getLogger(this.getClass());
 
     private final Settings settings;
-    private final List<SettingUpdater<?>> settingUpdaters = new CopyOnWriteArrayList<>();
+    private Settings lastSettingsApplied;
+
     private final Map<String, Setting<?>> complexMatchers;
     private final Map<String, Setting<?>> keySettings;
+
     private final Map<Setting<?>, SettingUpgrader<?>> settingUpgraders;
+    private final List<SettingUpdater<?>> settingUpdaters = new CopyOnWriteArrayList<>();
     private final Setting.Property scope;
-    private Settings lastSettingsApplied;
+
 
     protected AbstractScopedSettings(
             final Settings settings,
@@ -76,7 +79,6 @@ public abstract class AbstractScopedSettings {
         this.settingUpgraders =
                 Collections.unmodifiableMap(
                         settingUpgraders.stream().collect(Collectors.toMap(SettingUpgrader::getSetting, Function.identity())));
-
 
         this.scope = scope;
         Map<String, Setting<?>> complexMatchers = new HashMap<>();
@@ -453,8 +455,7 @@ public abstract class AbstractScopedSettings {
      * @param validateInternalOrPrivateIndex true if internal index settings should be validated
      * @throws IllegalArgumentException if the setting is invalid
      */
-    void validate(
-            final String key, final Settings settings, final boolean validateDependencies, final boolean validateInternalOrPrivateIndex) {
+    void validate(final String key, final Settings settings, final boolean validateDependencies, final boolean validateInternalOrPrivateIndex) {
         Setting setting = getRaw(key);
         if (setting == null) {
             LevensteinDistance ld = new LevensteinDistance();
@@ -760,6 +761,8 @@ public abstract class AbstractScopedSettings {
         return changed;
     }
 
+    //如果newSetting的key已经存在于complexMatchers中
+    //否则在complexMatchers中寻找与newSetting.key匹配的Setting并返回
     private static Setting<?> findOverlappingSetting(Setting<?> newSetting, Map<String, Setting<?>> complexMatchers) {
         assert newSetting.hasComplexMatcher();
         if (complexMatchers.containsKey(newSetting.getKey())) {

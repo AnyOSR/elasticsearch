@@ -51,12 +51,9 @@ public class Environment {
     private static final Path[] EMPTY_PATH_ARRAY = new Path[0];
 
     public static final Setting<String> PATH_HOME_SETTING = Setting.simpleString("path.home", Property.NodeScope);
-    public static final Setting<List<String>> PATH_DATA_SETTING =
-            Setting.listSetting("path.data", Collections.emptyList(), Function.identity(), Property.NodeScope);
-    public static final Setting<String> PATH_LOGS_SETTING =
-            new Setting<>("path.logs", "", Function.identity(), Property.NodeScope);
-    public static final Setting<List<String>> PATH_REPO_SETTING =
-        Setting.listSetting("path.repo", Collections.emptyList(), Function.identity(), Property.NodeScope);
+    public static final Setting<List<String>> PATH_DATA_SETTING = Setting.listSetting("path.data", Collections.emptyList(), Function.identity(), Property.NodeScope);
+    public static final Setting<String> PATH_LOGS_SETTING = new Setting<>("path.logs", "", Function.identity(), Property.NodeScope);
+    public static final Setting<List<String>> PATH_REPO_SETTING = Setting.listSetting("path.repo", Collections.emptyList(), Function.identity(), Property.NodeScope);
     public static final Setting<String> PATH_SHARED_DATA_SETTING = Setting.simpleString("path.shared_data", Property.NodeScope);
     public static final Setting<String> PIDFILE_SETTING = Setting.simpleString("pidfile", Property.NodeScope);
 

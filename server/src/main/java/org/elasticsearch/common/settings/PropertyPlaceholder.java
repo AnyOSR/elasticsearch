@@ -125,6 +125,7 @@ class PropertyPlaceholder {
         return buf.toString();
     }
 
+    //找到匹配的括号
     private int findPlaceholderEndIndex(CharSequence buf, int startIndex) {
         int index = startIndex + this.placeholderPrefix.length();
         int withinNestedPlaceholder = 0;

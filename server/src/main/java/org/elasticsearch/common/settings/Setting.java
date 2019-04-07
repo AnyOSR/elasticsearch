@@ -137,7 +137,7 @@ public class Setting<T> implements ToXContentObject {
     }
 
     private final Key key;
-    protected final Function<Settings, String> defaultValue;
+    protected final Function<Settings, String> defaultValue;   //
     @Nullable
     private final Setting<T> fallbackSetting;
     private final Function<String, T> parser;
@@ -398,14 +398,18 @@ public class Setting<T> implements ToXContentObject {
         return get(settings, true);
     }
 
+    // Settings里面的key应该对应的是 setting里面的key
+    // 通过Setting里面的key 拿到Settings对应key的value后，
+    // 解析这个value转换成T
+    // setting 其实是一种解析and校验方式？
     private T get(Settings settings, boolean validate) {
         String value = getRaw(settings);
         try {
             T parsed = parser.apply(value);
             if (validate) {
-                final Iterator<Setting<T>> it = validator.settings();
+                final Iterator<Setting<T>> it = validator.settings();   //一个validator里面有很多Setting
                 final Map<Setting<T>, T> map;
-                if (it.hasNext()) {
+                if (it.hasNext()) {            // 如果validator里面存在element
                     map = new HashMap<>();
                     while (it.hasNext()) {
                         final Setting<T> setting = it.next();
@@ -648,10 +652,13 @@ public class Setting<T> implements ToXContentObject {
             return true;
         }
 
+        //返回settings中所有与当前key匹配的ConcreteString
         private Stream<String> matchStream(Settings settings) {
             return settings.keySet().stream().filter(this::match).map(key::getConcreteString);
         }
 
+        //找到settingsKey的nameSpace,然后生成fullKey
+        //然后通过delegateFactory生成 Setting<T>
         public Set<Setting<?>> getSettingsDependencies(String settingsKey) {
             if (dependencies.isEmpty()) {
                 return Collections.emptySet();
@@ -661,8 +668,10 @@ public class Setting<T> implements ToXContentObject {
             }
         }
 
-        AbstractScopedSettings.SettingUpdater<Map<AbstractScopedSettings.SettingUpdater<T>, T>> newAffixUpdater(
-            BiConsumer<String, T> consumer, Logger logger, BiConsumer<String, T> validator) {
+        //         AbstractScopedSettings.SettingUpdater<T>
+        //     Map<AbstractScopedSettings.SettingUpdater<T>, T>
+        AbstractScopedSettings.SettingUpdater<Map<AbstractScopedSettings.SettingUpdater<T>, T>> newAffixUpdater(BiConsumer<String, T> consumer, Logger logger, BiConsumer<String, T> validator) {
+
             return new AbstractScopedSettings.SettingUpdater<Map<AbstractScopedSettings.SettingUpdater<T>, T>>() {
 
                 @Override
@@ -677,9 +686,7 @@ public class Setting<T> implements ToXContentObject {
                     Stream.concat(matchStream(current), matchStream(previous)).distinct().forEach(aKey -> {
                         String namespace = key.getNamespace(aKey);
                         Setting<T> concreteSetting = getConcreteSetting(aKey);
-                        AbstractScopedSettings.SettingUpdater<T> updater =
-                            concreteSetting.newUpdater((v) -> consumer.accept(namespace, v), logger,
-                                (v) -> validator.accept(namespace, v));
+                        AbstractScopedSettings.SettingUpdater<T> updater = concreteSetting.newUpdater((v) -> consumer.accept(namespace, v), logger, (v) -> validator.accept(namespace, v));
                         if (updater.hasChanged(current, previous)) {
                             // only the ones that have changed otherwise we might get too many updates
                             // the hasChanged above checks only if there are any changes
@@ -699,8 +706,7 @@ public class Setting<T> implements ToXContentObject {
             };
         }
 
-        AbstractScopedSettings.SettingUpdater<Map<String, T>> newAffixMapUpdater(Consumer<Map<String, T>> consumer, Logger logger,
-                                                                                 BiConsumer<String, T> validator) {
+        AbstractScopedSettings.SettingUpdater<Map<String, T>> newAffixMapUpdater(Consumer<Map<String, T>> consumer, Logger logger, BiConsumer<String, T> validator) {
             return new AbstractScopedSettings.SettingUpdater<Map<String, T>>() {
 
                 @Override
@@ -715,8 +721,7 @@ public class Setting<T> implements ToXContentObject {
                     Stream.concat(matchStream(current), matchStream(previous)).distinct().forEach(aKey -> {
                         String namespace = key.getNamespace(aKey);
                         Setting<T> concreteSetting = getConcreteSetting(aKey);
-                        AbstractScopedSettings.SettingUpdater<T> updater =
-                            concreteSetting.newUpdater((v) -> {}, logger, (v) -> validator.accept(namespace, v));
+                        AbstractScopedSettings.SettingUpdater<T> updater = concreteSetting.newUpdater((v) -> {}, logger, (v) -> validator.accept(namespace, v));
                         if (updater.hasChanged(current, previous)) {
                             // only the ones that have changed otherwise we might get too many updates
                             // the hasChanged above checks only if there are any changes
@@ -746,6 +751,7 @@ public class Setting<T> implements ToXContentObject {
                 " use #getConcreteSetting to obtain a concrete setting");
         }
 
+        //如果key与this.key匹配，则根据delegateFactory和key生成Setting<T>
         @Override
         public Setting<T> getConcreteSetting(String key) {
             if (match(key)) {
@@ -757,6 +763,7 @@ public class Setting<T> implements ToXContentObject {
 
         /**
          * Get a setting with the given namespace filled in for prefix and suffix.
+         * 根据当前的prefix和suffix，以及给定的namespace，生成Setting<T>
          */
         public Setting<T> getConcreteSettingForNamespace(String namespace) {
             String fullKey = key.toConcreteKey(namespace).toString();
@@ -861,6 +868,7 @@ public class Setting<T> implements ToXContentObject {
             }
         }
 
+        //返回前缀匹配的 Settings
         @Override
         public Settings get(Settings settings) {
             Settings byPrefix = settings.getByPrefix(getKey());
@@ -868,6 +876,7 @@ public class Setting<T> implements ToXContentObject {
             return byPrefix;
         }
 
+        //settings中的key以this.key开头
         @Override
         public boolean exists(Settings settings) {
             for (String settingsKey : settings.keySet()) {
@@ -888,8 +897,8 @@ public class Setting<T> implements ToXContentObject {
         }
 
         @Override
-        public AbstractScopedSettings.SettingUpdater<Settings> newUpdater(Consumer<Settings> consumer, Logger logger,
-                                                                          Consumer<Settings> validator) {
+        public AbstractScopedSettings.SettingUpdater<Settings> newUpdater(Consumer<Settings> consumer, Logger logger, Consumer<Settings> validator) {
+
             if (isDynamic() == false) {
                 throw new IllegalStateException("setting [" + getKey() + "] is not dynamic");
             }
@@ -910,8 +919,7 @@ public class Setting<T> implements ToXContentObject {
                     try {
                         validator.accept(currentSettings);
                     } catch (Exception | AssertionError e) {
-                        throw new IllegalArgumentException("illegal value can't update [" + key + "] from ["
-                                + previousSettings + "] to [" + currentSettings+ "]", e);
+                        throw new IllegalArgumentException("illegal value can't update [" + key + "] from [" + previousSettings + "] to [" + currentSettings+ "]", e);
                     }
                     return currentSettings;
                 }
@@ -948,12 +956,12 @@ public class Setting<T> implements ToXContentObject {
 
         @Override
         public boolean hasChanged(Settings current, Settings previous) {
-            final String newValue = getRaw(current);
-            final String value = getRaw(previous);
+            final String newValue = getRaw(current);   //取得当前setting.key在current中的值
+            final String value = getRaw(previous);     //取得当前setting.key在previous中的值
             assert isGroupSetting() == false : "group settings must override this method";
             assert value != null : "value was null but can't be unless default is null which is invalid";
 
-            return value.equals(newValue) == false;
+            return value.equals(newValue) == false;    //不相同则change
         }
 
         @Override
@@ -961,12 +969,11 @@ public class Setting<T> implements ToXContentObject {
             final String newValue = getRaw(current);
             final String value = getRaw(previous);
             try {
-                T inst = get(current);
+                T inst = get(current);  //根据current和this.key找到一个String值，利用parser将String值解析成T
                 accept.accept(inst);
                 return inst;
             } catch (Exception | AssertionError e) {
-                throw new IllegalArgumentException("illegal value can't update [" + key + "] from [" + value + "] to [" + newValue + "]",
-                        e);
+                throw new IllegalArgumentException("illegal value can't update [" + key + "] from [" + value + "] to [" + newValue + "]", e);
             }
         }
 
@@ -1479,7 +1486,9 @@ public class Setting<T> implements ToXContentObject {
         }
     }
 
+    //key必须与.结尾
     public static final class GroupKey extends SimpleKey {
+
         public GroupKey(String key) {
             super(key);
             if (key.endsWith(".") == false) {
@@ -1490,7 +1499,7 @@ public class Setting<T> implements ToXContentObject {
         @Override
         public boolean match(String toTest) {
             return Regex.simpleMatch(key + "*", toTest);
-        }
+        }   //key.
     }
 
     public static final class ListKey extends SimpleKey {
@@ -1498,7 +1507,7 @@ public class Setting<T> implements ToXContentObject {
 
         public ListKey(String key) {
             super(key);
-            this.pattern = Pattern.compile(Pattern.quote(key) + "(\\.\\d+)?");
+            this.pattern = Pattern.compile(Pattern.quote(key) + "(\\.\\d+)?");    // .数字
         }
 
         @Override
