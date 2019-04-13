@@ -92,5 +92,5 @@ path:
 #  -Des.path.home=D:\idea_workspace\elasticsearch
 #  -Djava.security.policy=D:\idea_workspace\elasticsearch\distribution\src\config\security.policy
 #  -Dlog4j2.disable.jmx=true
-all:
-  data: ${prompt.secret}
+#all:
+#  data: ${prompt.secret}

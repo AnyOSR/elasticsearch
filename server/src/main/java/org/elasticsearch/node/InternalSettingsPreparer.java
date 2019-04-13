@@ -107,7 +107,7 @@ public class InternalSettingsPreparer {
         initializeSettings(output, input, properties);                           // 将 input和properties的属性值放入output
         finalizeSettings(output, terminal);
 
-        environment = new Environment(output.build(), configPath);
+        environment = new Environment(output.build(), configPath);               //创建一个新的 environment
 
         // we put back the path.logs so we can use it in the logging configuration file
         output.put(Environment.PATH_LOGS_SETTING.getKey(), environment.logsFile().toAbsolutePath().normalize().toString());
