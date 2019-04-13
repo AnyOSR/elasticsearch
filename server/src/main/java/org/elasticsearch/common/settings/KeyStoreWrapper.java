@@ -191,7 +191,7 @@ public class KeyStoreWrapper implements SecureSettings {
         assert wrapper.getSettingNames().contains(SEED_SETTING.getKey()) == false;
         SecureRandom random = Randomness.createSecure();
         int passwordLength = 20; // Generate 20 character passwords
-        char[] characters = new char[passwordLength];
+        char[] characters = new char[passwordLength];                         //产生passwordLength长度的char
         for (int i = 0; i < passwordLength; ++i) {
             characters[i] = SEED_CHARS[random.nextInt(SEED_CHARS.length)];
         }
@@ -211,10 +211,11 @@ public class KeyStoreWrapper implements SecureSettings {
             return null;
         }
 
+        // 存在则对文件进行校验
         SimpleFSDirectory directory = new SimpleFSDirectory(configDir);
         try (IndexInput indexInput = directory.openInput(KEYSTORE_FILENAME, IOContext.READONCE)) {
             ChecksumIndexInput input = new BufferedChecksumIndexInput(indexInput);
-            int formatVersion = CodecUtil.checkHeader(input, KEYSTORE_FILENAME, MIN_FORMAT_VERSION, FORMAT_VERSION);
+            int formatVersion = CodecUtil.checkHeader(input, KEYSTORE_FILENAME, MIN_FORMAT_VERSION, FORMAT_VERSION);   //检查header
             byte hasPasswordByte = input.readByte();
             boolean hasPassword = hasPasswordByte == 1;
             if (hasPassword == false && hasPasswordByte != 0) {
@@ -261,12 +262,12 @@ public class KeyStoreWrapper implements SecureSettings {
                 }
                 dataBytes = bytes.toByteArray();
             } else {
-                int dataBytesLen = input.readInt();
+                int dataBytesLen = input.readInt();    //总长度
                 dataBytes = new byte[dataBytesLen];
-                input.readBytes(dataBytes, 0, dataBytesLen);
+                input.readBytes(dataBytes, 0, dataBytesLen);    //读取内容
             }
 
-            CodecUtil.checkFooter(input);
+            CodecUtil.checkFooter(input);   //检查footer ~魔数 0 校验码
             return new KeyStoreWrapper(formatVersion, hasPassword, dataBytes);
         }
     }
@@ -342,7 +343,7 @@ public class KeyStoreWrapper implements SecureSettings {
             throw new SecurityException("Keystore has been corrupted or tampered with", e);
         }
 
-        Cipher cipher = createCipher(Cipher.DECRYPT_MODE, password, salt, iv);
+        Cipher cipher = createCipher(Cipher.DECRYPT_MODE, password, salt, iv);                 // 解密entry并设置
         try (ByteArrayInputStream bytesStream = new ByteArrayInputStream(encryptedBytes);
              CipherInputStream cipherStream = new CipherInputStream(bytesStream, cipher);
              DataInputStream input = new DataInputStream(cipherStream)) {
@@ -372,13 +373,13 @@ public class KeyStoreWrapper implements SecureSettings {
         Cipher cipher = createCipher(Cipher.ENCRYPT_MODE, password, salt, iv);
         try (CipherOutputStream cipherStream = new CipherOutputStream(bytes, cipher);
              DataOutputStream output = new DataOutputStream(cipherStream)) {
-            output.writeInt(entries.get().size());
+            output.writeInt(entries.get().size());                                     //写入entry的总个数
             for (Map.Entry<String, Entry> mapEntry : entries.get().entrySet()) {
                 output.writeUTF(mapEntry.getKey());
                 Entry entry = mapEntry.getValue();
-                output.writeUTF(entry.type.name());
-                output.writeInt(entry.bytes.length);
-                output.write(entry.bytes);
+                output.writeUTF(entry.type.name());                                    // type名称
+                output.writeInt(entry.bytes.length);                                   // 对应的字节内容长度
+                output.write(entry.bytes);                                             // 对应的字节内容
             }
         }
         return bytes.toByteArray();
@@ -465,33 +466,33 @@ public class KeyStoreWrapper implements SecureSettings {
         // write to tmp file first, then overwrite
         String tmpFile = KEYSTORE_FILENAME + ".tmp";
         try (IndexOutput output = directory.createOutput(tmpFile, IOContext.DEFAULT)) {
-            CodecUtil.writeHeader(output, KEYSTORE_FILENAME, FORMAT_VERSION);
-            output.writeByte(password.length == 0 ? (byte)0 : (byte)1);
+            CodecUtil.writeHeader(output, KEYSTORE_FILENAME, FORMAT_VERSION);    // 魔数(0x3fd76c17) code(elasticsearch.keystore) version(3)
+            output.writeByte(password.length == 0 ? (byte)0 : (byte)1);          // 是否存在密码(0 or 1)
 
             // new cipher params
             SecureRandom random = Randomness.createSecure();
             // use 64 bytes salt, which surpasses that recommended by OWASP
             // see https://www.owasp.org/index.php/Password_Storage_Cheat_Sheet
             byte[] salt = new byte[64];
-            random.nextBytes(salt);
+            random.nextBytes(salt);                                               // 64为盐值
             // use 96 bits (12 bytes) for IV as recommended by NIST
             // see http://nvlpubs.nist.gov/nistpubs/Legacy/SP/nistspecialpublication800-38d.pdf section 5.2.1.1
-            byte[] iv = new byte[12];
+            byte[] iv = new byte[12];                                             // 12位iv
             random.nextBytes(iv);
             // encrypted data
-            byte[] encryptedBytes = encrypt(password, salt, iv);
+            byte[] encryptedBytes = encrypt(password, salt, iv);        // 加密entry
 
             // size of data block
-            output.writeInt(4 + salt.length + 4 + iv.length + 4 + encryptedBytes.length);
+            output.writeInt(4 + salt.length + 4 + iv.length + 4 + encryptedBytes.length);    //写入长度
 
-            output.writeInt(salt.length);
+            output.writeInt(salt.length);                  //写入 salt iv 加密数据
             output.writeBytes(salt, salt.length);
             output.writeInt(iv.length);
             output.writeBytes(iv, iv.length);
             output.writeInt(encryptedBytes.length);
             output.writeBytes(encryptedBytes, encryptedBytes.length);
 
-            CodecUtil.writeFooter(output);
+            CodecUtil.writeFooter(output);           // 写入~魔数 0 以及校验码
 
         } catch (final AccessDeniedException e) {
             final String message = String.format(
@@ -560,7 +561,7 @@ public class KeyStoreWrapper implements SecureSettings {
     /** Set a string setting. */
     synchronized void setString(String setting, char[] value) {
         ensureOpen();
-        validateSettingName(setting);
+        validateSettingName(setting);      // 校验模式是否匹配
 
         ByteBuffer byteBuffer = StandardCharsets.UTF_8.encode(CharBuffer.wrap(value));
         byte[] bytes = Arrays.copyOfRange(byteBuffer.array(), byteBuffer.position(), byteBuffer.limit());

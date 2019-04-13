@@ -1141,6 +1141,9 @@ public final class Settings implements ToXContentFragment {
             return this;
         }
 
+        //对list形式的key进行处理
+        // 删除  preifx.0 preifx.1 preifx.2 ....  preifx.n
+        // 并添加 prefix --- List<>
         private void processLegacyLists(Map<String, Object> map) {
             String[] array = map.keySet().toArray(new String[map.size()]);
             for (String key : array) {
@@ -1202,8 +1205,7 @@ public final class Settings implements ToXContentFragment {
                 throw new IllegalArgumentException("unable to detect content type from resource name [" + resourceName + "]");
             }
             // fromXContent doesn't use named xcontent or deprecation.
-            try (XContentParser parser =  XContentFactory.xContent(xContentType)
-                    .createParser(NamedXContentRegistry.EMPTY, DeprecationHandler.THROW_UNSUPPORTED_OPERATION, is)) {
+            try (XContentParser parser =  XContentFactory.xContent(xContentType).createParser(NamedXContentRegistry.EMPTY, DeprecationHandler.THROW_UNSUPPORTED_OPERATION, is)) {
                 if (parser.currentToken() == null) {
                     if (parser.nextToken() == null) {
                         return this; // empty file
@@ -1237,7 +1239,7 @@ public final class Settings implements ToXContentFragment {
             return replacePropertyPlaceholders(System::getenv);
         }
 
-        // visible for testing
+        // visible for testing  替换value值
         Builder replacePropertyPlaceholders(Function<String, String> getenv) {
             PropertyPlaceholder propertyPlaceholder = new PropertyPlaceholder("${", "}", false);
             PropertyPlaceholder.PlaceholderResolver placeholderResolver = new PropertyPlaceholder.PlaceholderResolver() {
@@ -1320,6 +1322,7 @@ public final class Settings implements ToXContentFragment {
          * Builds a {@link Settings} (underlying uses {@link Settings}) based on everything
          * set on this builder.
          */
+        //基于当前Builder.map 返回一个新的Settings ，其已经对list进行了处理
         public Settings build() {
             processLegacyLists(map);
             return new Settings(map, secureSettings.get());

@@ -82,7 +82,7 @@ import java.util.stream.Stream;
  * public static final Setting<Color> MY_BOOLEAN =
  *     new Setting<>("my.color.setting", Color.RED.toString(), Color::valueOf, SettingsProperty.NodeScope);
  * }
- * </pre>
+ * </pre>  Setting<T>一种解析方式 针对Settings中同一个key的值可能会返回不同的T
  */
 public class Setting<T> implements ToXContentObject {
 

@@ -81,9 +81,9 @@ public class InternalSettingsPreparer {
      */
     public static Environment prepareEnvironment(Settings input, Terminal terminal, Map<String, String> properties, Path configPath) {
         // just create enough settings to build the environment, to get the config dir
-        Settings.Builder output = Settings.builder();
-        initializeSettings(output, input, properties);
-        Environment environment = new Environment(output.build(), configPath);
+        Settings.Builder output = Settings.builder();                            // 创建一个新的builder
+        initializeSettings(output, input, properties);                           // 将input以及properties里面的内容 添加到output  以及进行替换
+        Environment environment = new Environment(output.build(), configPath);   // 基于output生成一个新的Settings(该Settings对list进行了处理) 生成一个Environment
 
         if (Files.exists(environment.configFile().resolve("elasticsearch.yaml"))) {
             throw new SettingsException("elasticsearch.yaml was deprecated in 5.5.0 and must be renamed to elasticsearch.yml");
@@ -93,18 +93,18 @@ public class InternalSettingsPreparer {
             throw new SettingsException("elasticsearch.json was deprecated in 5.5.0 and must be converted to elasticsearch.yml");
         }
 
-        output = Settings.builder(); // start with a fresh output
+        output = Settings.builder(); // start with a fresh output                // 创建一个新的Builder
         Path path = environment.configFile().resolve("elasticsearch.yml");
         if (Files.exists(path)) {
             try {
-                output.loadFromPath(path);
+                output.loadFromPath(path);                                        // 如果存在elasticsearch.yml，则对其进行解析 并将解析到的属性值放入到output中
             } catch (IOException e) {
                 throw new SettingsException("Failed to load settings from " + path.toString(), e);
             }
         }
 
         // re-initialize settings now that the config file has been loaded
-        initializeSettings(output, input, properties);
+        initializeSettings(output, input, properties);                           // 将 input和properties的属性值放入output
         finalizeSettings(output, terminal);
 
         environment = new Environment(output.build(), configPath);
@@ -135,23 +135,23 @@ public class InternalSettingsPreparer {
     private static void finalizeSettings(Settings.Builder output, Terminal terminal) {
         // allow to force set properties based on configuration of the settings provided
         List<String> forcedSettings = new ArrayList<>();
-        for (String setting : output.keys()) {
+        for (String setting : output.keys()) {        //如果以force. 打头
             if (setting.startsWith("force.")) {
                 forcedSettings.add(setting);
             }
         }
-        for (String forcedSetting : forcedSettings) {
+        for (String forcedSetting : forcedSettings) {  //去掉force.
             String value = output.remove(forcedSetting);
             output.put(forcedSetting.substring("force.".length()), value);
         }
-        output.replacePropertyPlaceholders();
+        output.replacePropertyPlaceholders();          // 替换   系统属性
 
         // put the cluster name
         if (output.get(ClusterName.CLUSTER_NAME_SETTING.getKey()) == null) {
             output.put(ClusterName.CLUSTER_NAME_SETTING.getKey(), ClusterName.CLUSTER_NAME_SETTING.getDefault(Settings.EMPTY).value());
         }
 
-        replacePromptPlaceholders(output, terminal);
+        replacePromptPlaceholders(output, terminal);   //从terminal输入值以替换
     }
 
     private static void replacePromptPlaceholders(Settings.Builder settings, Terminal terminal) {

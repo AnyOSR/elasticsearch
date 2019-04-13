@@ -89,9 +89,12 @@ public class Environment {
         this(settings, configPath, PathUtils.get(System.getProperty("java.io.tmpdir")));
     }
 
+    // 创建一个 Environment,并对相关属性进行检查，否则抛出异常
     // Should only be called directly by this class's unit tests
     Environment(final Settings settings, final Path configPath, final Path tmpPath) {
         final Path homeFile;
+
+        // path.home的处理
         if (PATH_HOME_SETTING.exists(settings)) {
             homeFile = PathUtils.get(PATH_HOME_SETTING.get(settings)).normalize();
         } else {
@@ -108,7 +111,10 @@ public class Environment {
 
         pluginsFile = homeFile.resolve("plugins");
 
+        // settings 配置的path.data
         List<String> dataPaths = PATH_DATA_SETTING.get(settings);
+
+        // settings中的cluster.name
         final ClusterName clusterName = ClusterName.CLUSTER_NAME_SETTING.get(settings);
         if (DiscoveryNode.nodeRequiresLocalStorage(settings)) {
             if (dataPaths.isEmpty() == false) {
@@ -159,7 +165,7 @@ public class Environment {
         libFile = homeFile.resolve("lib");
         modulesFile = homeFile.resolve("modules");
 
-        Settings.Builder finalSettings = Settings.builder().put(settings);
+        Settings.Builder finalSettings = Settings.builder().put(settings);   //创建一个新Settings，并将settings中的内容进行复制
         finalSettings.put(PATH_HOME_SETTING.getKey(), homeFile);
         if (PATH_DATA_SETTING.exists(settings)) {
             finalSettings.putList(PATH_DATA_SETTING.getKey(), dataPaths);

@@ -233,7 +233,7 @@ final class Bootstrap {
         }
 
         try {
-            if (keystore == null) {
+            if (keystore == null) {    //不存在则创建
                 final KeyStoreWrapper keyStoreWrapper = KeyStoreWrapper.create();
                 keyStoreWrapper.save(initialEnv.configFile(), new char[0]);
                 return keyStoreWrapper;
