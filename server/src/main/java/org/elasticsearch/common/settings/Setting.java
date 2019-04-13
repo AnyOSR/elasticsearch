@@ -1095,6 +1095,9 @@ public class Setting<T> implements ToXContentObject {
         return intSetting(key, defaultValue, Integer.MIN_VALUE, properties);
     }
 
+    //虽然defaultValue在Setting中的类型是Function<Settings, String>
+    // (s) -> Boolean.toString(defaultValue)
+    // 函数体中并没有用到s 而是用到了给定的boolean defaultValue
     public static Setting<Boolean> boolSetting(String key, boolean defaultValue, Property... properties) {
         return new Setting<>(key, (s) -> Boolean.toString(defaultValue), Booleans::parseBoolean, properties);
     }
@@ -1445,8 +1448,7 @@ public class Setting<T> implements ToXContentObject {
         return affixKeySetting(new AffixKey(prefix, suffix), delegateFactory, dependencies);
     }
 
-    private static <T> AffixSetting<T> affixKeySetting(AffixKey key, Function<String, Setting<T>> delegateFactory,
-                                                       AffixSetting... dependencies) {
+    private static <T> AffixSetting<T> affixKeySetting(AffixKey key, Function<String, Setting<T>> delegateFactory, AffixSetting... dependencies) {
         Setting<T> delegate = delegateFactory.apply("_na_");
         return new AffixSetting<>(key, delegate, delegateFactory, dependencies);
     }

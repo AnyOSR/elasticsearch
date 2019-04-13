@@ -317,8 +317,7 @@ public class PluginsService {
         if (Files.exists(rootPath)) {
             try (DirectoryStream<Path> stream = Files.newDirectoryStream(rootPath)) {
                 for (Path plugin : stream) {
-                    if (FileSystemUtils.isDesktopServicesStore(plugin) ||
-                        plugin.getFileName().toString().startsWith(".removing-")) {
+                    if (FileSystemUtils.isDesktopServicesStore(plugin) || plugin.getFileName().toString().startsWith(".removing-")) {
                         continue;
                     }
                     if (seen.add(plugin.getFileName().toString()) == false) {

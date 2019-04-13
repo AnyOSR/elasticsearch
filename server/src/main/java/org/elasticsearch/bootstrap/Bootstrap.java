@@ -162,11 +162,14 @@ final class Bootstrap {
         Settings settings = environment.settings();
 
         try {
-            spawner.spawnNativeControllers(environment);
+            spawner.spawnNativeControllers(environment);     // module 子进程
         } catch (IOException e) {
             throw new BootstrapException(e);
         }
 
+        // memory_lock
+        // system_call_filter
+        // ConsoleCtrlHandler
         initializeNatives(
                 environment.tmpFile(),
                 BootstrapSettings.MEMORY_LOCK_SETTING.get(settings),
@@ -174,6 +177,7 @@ final class Bootstrap {
                 BootstrapSettings.CTRLHANDLER_SETTING.get(settings));
 
         // initialize probes before the security manager is installed
+        // 探针
         initializeProbes();
 
         if (addShutdownHook) {
@@ -209,6 +213,7 @@ final class Bootstrap {
             throw new BootstrapException(e);
         }
 
+        //创建节点
         node = new Node(environment) {
             @Override
             protected void validateNodeBeforeAcceptingRequests(
@@ -249,10 +254,8 @@ final class Bootstrap {
 
     private static Environment createEnvironment(
             final boolean foreground,
-            final Path pidFile,
-            final SecureSettings secureSettings,
-            final Settings initialSettings,
-            final Path configPath) {
+            final Path pidFile, final SecureSettings secureSettings, final Settings initialSettings, final Path configPath) {
+
         Terminal terminal = foreground ? Terminal.DEFAULT : null;
         Settings.Builder builder = Settings.builder();
         if (pidFile != null) {
@@ -292,8 +295,9 @@ final class Bootstrap {
 
         INSTANCE = new Bootstrap();
 
+        // 加载磁盘中的配置（加密过的）
         final SecureSettings keystore = loadSecureSettings(initialEnv);
-        final Environment environment = createEnvironment(foreground, pidFile, keystore, initialEnv.settings(), initialEnv.configFile());
+        final Environment environment = createEnvironment(foreground, pidFile, keystore, initialEnv.settings(), initialEnv.configFile());  // 因为SecureSettings改变，重新生成一个environment
 
         if (Node.NODE_NAME_SETTING.exists(environment.settings())) {
             LogConfigurator.setNodeName(Node.NODE_NAME_SETTING.get(environment.settings()));

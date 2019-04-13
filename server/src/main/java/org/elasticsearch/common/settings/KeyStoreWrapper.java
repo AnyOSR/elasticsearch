@@ -195,7 +195,7 @@ public class KeyStoreWrapper implements SecureSettings {
         for (int i = 0; i < passwordLength; ++i) {
             characters[i] = SEED_CHARS[random.nextInt(SEED_CHARS.length)];
         }
-        wrapper.setString(SEED_SETTING.getKey(), characters);
+        wrapper.setString(SEED_SETTING.getKey(), characters);                 // keystore.seed
         Arrays.fill(characters, (char)0);
     }
 
