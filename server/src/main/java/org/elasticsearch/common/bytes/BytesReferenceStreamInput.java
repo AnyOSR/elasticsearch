@@ -31,11 +31,11 @@ import java.io.IOException;
  * underlying bytes reference.
  */
 final class BytesReferenceStreamInput extends StreamInput {
-    private final BytesRefIterator iterator;
-    private int sliceIndex;
+    private final BytesRefIterator iterator;            // 利用iterator来产生BytesRef
+    private int sliceIndex;                             // 由于没有对 slice.offset++，利用sliceIndex来记录偏移
     private BytesRef slice;
-    private final int length; // the total size of the stream
-    private int offset; // the current position of the stream
+    private final int length; // the total size of the stream    // 整体的长度
+    private int offset; // the current position of the stream    // 整体对外的offset
 
     BytesReferenceStreamInput(BytesRefIterator iterator, final int length) throws IOException {
         this.iterator = iterator;
@@ -82,19 +82,20 @@ final class BytesReferenceStreamInput extends StreamInput {
         return Byte.toUnsignedInt(readByte());
     }
 
+    // 将当前this的数据(长度为len)复制到b，b的起始复制位置为bOffset
     @Override
     public int read(final byte[] b, final int bOffset, final int len) throws IOException {
         if (offset >= length) {
             return -1;
         }
-        final int numBytesToCopy =  Math.min(len, length - offset);
+        final int numBytesToCopy =  Math.min(len, length - offset);                       // 找到需要复制的数据量
         int remaining = numBytesToCopy; // copy the full length or the remaining part
         int destOffset = bOffset;
         while (remaining > 0) {
             maybeNextSlice();
-            final int currentLen = Math.min(remaining, slice.length - sliceIndex);
+            final int currentLen = Math.min(remaining, slice.length - sliceIndex);        // 找到当前能复制的数据长度
             assert currentLen > 0 : "length has to be > 0 to make progress but was: " + currentLen;
-            System.arraycopy(slice.bytes, slice.offset + sliceIndex, b, destOffset, currentLen);
+            System.arraycopy(slice.bytes, slice.offset + sliceIndex, b, destOffset, currentLen); // 复制
             destOffset += currentLen;
             remaining -= currentLen;
             sliceIndex += currentLen;

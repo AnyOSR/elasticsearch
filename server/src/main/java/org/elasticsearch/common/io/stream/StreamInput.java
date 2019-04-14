@@ -205,20 +205,20 @@ public abstract class StreamInput extends InputStream {
     }
 
     /**
-     * Reads an int stored in variable-length format.  Reads between one and
-     * five bytes.  Smaller values take fewer bytes.  Negative numbers
-     * will always use all 5 bytes and are therefore better serialized
+     * Reads an int stored in variable-length format.  Reads between one and    变长类型长度  一到五字节
+     * five bytes.  Smaller values take fewer bytes.  Negative numbers          很小的数占用更少的字节
+     * will always use all 5 bytes and are therefore better serialized          负数总是五个字节  负数最好用readInt
      * using {@link #readInt}
      */
     public int readVInt() throws IOException {
-        byte b = readByte();
-        int i = b & 0x7F;
-        if ((b & 0x80) == 0) {
+        byte b = readByte();   // 读取一个字节
+        int i = b & 0x7F;      // 取b的低七位
+        if ((b & 0x80) == 0) { // b的最高位是0   表示只要低七位bit 范围从0 ~ 7F  每个字节的最高位是不是废了？
             return i;
         }
-        b = readByte();
-        i |= (b & 0x7F) << 7;
-        if ((b & 0x80) == 0) {
+        b = readByte();               // 读取一个字节
+        i |= (b & 0x7F) << 7;         // 当前字节的低七位 向左移7位
+        if ((b & 0x80) == 0) {   // 最高位为0   每个字节的低七位是有效数据位，最高位表示数据是否取完
             return i;
         }
         b = readByte();
@@ -249,7 +249,7 @@ public abstract class StreamInput extends InputStream {
      * Reads a long stored in variable-length format. Reads between one and ten bytes. Smaller values take fewer bytes. Negative numbers
      * are encoded in ten bytes so prefer {@link #readLong()} or {@link #readZLong()} for negative numbers.
      */
-    public long readVLong() throws IOException {
+    public long readVLong() throws IOException {     // 同样的套路
         byte b = readByte();
         long i = b & 0x7FL;
         if ((b & 0x80) == 0) {
@@ -303,11 +303,12 @@ public abstract class StreamInput extends InputStream {
         return i;
     }
 
+    // zigzag压缩，增加0的个数，利于压缩
     public long readZLong() throws IOException {
         long accumulator = 0L;
         int i = 0;
         long currentByte;
-        while (((currentByte = readByte()) & 0x80L) != 0) {
+        while (((currentByte = readByte()) & 0x80L) != 0) {  // 最高位为1
             accumulator |= (currentByte & 0x7F) << i;
             i += 7;
             if (i > 63) {
@@ -379,8 +380,8 @@ public abstract class StreamInput extends InputStream {
         spare.length = charCount;
         final char[] buffer = spare.chars;
         for (int i = 0; i < charCount; i++) {
-            final int c = readByte() & 0xff;
-            switch (c >> 4) {
+            final int c = readByte() & 0xff;    // 读取一字节
+            switch (c >> 4) {   // 高四位 ascii
                 case 0:
                 case 1:
                 case 2:
@@ -429,6 +430,7 @@ public abstract class StreamInput extends InputStream {
         return readBoolean(readByte());
     }
 
+    //0代表false 1代表true
     private boolean readBoolean(final byte value) {
         if (value == 0) {
             return false;
@@ -440,6 +442,7 @@ public abstract class StreamInput extends InputStream {
         }
     }
 
+    // 2代表null 0代表Boolean.false 1代表Boolean.true
     @Nullable
     public final Boolean readOptionalBoolean() throws IOException {
         final byte value = readByte();
@@ -759,8 +762,7 @@ public abstract class StreamInput extends InputStream {
         if (readBoolean()) {
             T t = reader.read(this);
             if (t == null) {
-                throw new IOException("Writeable.Reader [" + reader
-                        + "] returned null which is not allowed and probably means it screwed up the stream.");
+                throw new IOException("Writeable.Reader [" + reader + "] returned null which is not allowed and probably means it screwed up the stream.");
             }
             return t;
         } else {
@@ -769,8 +771,8 @@ public abstract class StreamInput extends InputStream {
     }
 
     public <T extends Exception> T readException() throws IOException {
-        if (readBoolean()) {
-            int key = readVInt();
+        if (readBoolean()) {  // 一字节的boolean 都有这个，貌似也没法完全自解析啊？还是有一定作用的
+            int key = readVInt();   //变长int
             switch (key) {
                 case 0:
                     final int ord = readVInt();
@@ -951,8 +953,7 @@ public abstract class StreamInput extends InputStream {
     /**
      * Reads a collection of objects
      */
-    private <T, C extends Collection<? super T>> C readCollection(Writeable.Reader<T> reader,
-                                                                  IntFunction<C> constructor) throws IOException {
+    private <T, C extends Collection<? super T>> C readCollection(Writeable.Reader<T> reader, IntFunction<C> constructor) throws IOException {
         int count = readArraySize();
         C builder = constructor.apply(count);
         for (int i=0; i<count; i++) {
@@ -964,6 +965,7 @@ public abstract class StreamInput extends InputStream {
     /**
      * Reads a list of {@link NamedWriteable}s.
      */
+    // 长度
     public <T extends NamedWriteable> List<T> readNamedWriteableList(Class<T> categoryClass) throws IOException {
         int count = readArraySize();
         List<T> builder = new ArrayList<>(count);
@@ -988,6 +990,7 @@ public abstract class StreamInput extends InputStream {
     /**
      * Reads an enum with type E that was serialized based on the value of it's ordinal
      */
+    // 变长int 一些列变长int（储存ordinal的值）
     public <E extends Enum<E>> EnumSet<E> readEnumSet(Class<E> enumClass) throws IOException {
         int size = readVInt();
         if (size == 0) {
@@ -1012,6 +1015,7 @@ public abstract class StreamInput extends InputStream {
      * Reads a vint via {@link #readVInt()} and applies basic checks to ensure the read array size is sane.
      * This method uses {@link #ensureCanReadBytes(int)} to ensure this stream has enough bytes to read for the read array size.
      */
+    //变长int 加了一些校验
     private int readArraySize() throws IOException {
         final int arraySize = readVInt();
         if (arraySize > ArrayUtil.MAX_ARRAY_LENGTH) {
@@ -1036,6 +1040,7 @@ public abstract class StreamInput extends InputStream {
     /**
      * Read a {@link TimeValue} from the stream
      */
+    // 变长duration 一字节的时间单位
     public TimeValue readTimeValue() throws IOException {
         long duration = readZLong();
         TimeUnit timeUnit = BYTE_TIME_UNIT_MAP.get(readByte());

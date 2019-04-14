@@ -33,7 +33,7 @@ import java.io.OutputStream;
 import java.util.function.ToIntBiFunction;
 
 /**
- * A reference to bytes.
+ * A reference to bytes.  对
  */
 public abstract class BytesReference implements Comparable<BytesReference>, ToXContentFragment {
 
