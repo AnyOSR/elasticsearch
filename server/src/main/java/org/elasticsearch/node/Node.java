@@ -203,12 +203,15 @@ public abstract class Node implements Closeable {
     */
     public static final Setting<Boolean> NODE_LOCAL_STORAGE_SETTING = Setting.boolSetting("node.local_storage", true, Property.NodeScope);
     public static final Setting<String> NODE_NAME_SETTING = Setting.simpleString("node.name", Property.NodeScope);
+
+    // 对value的值做了一些校验 如果不符合规范，则抛出异常
+    // String prefix, Function<String, Setting<String>> delegateFactory
     public static final Setting.AffixSetting<String> NODE_ATTRIBUTES = Setting.prefixKeySetting("node.attr.", (key) ->
+
+        // String key, String defaultValue, Function<String, String> parser, Property... properties
         new Setting<>(key, "", (value) -> {
-            if (value.length() > 0
-                && (Character.isWhitespace(value.charAt(0)) || Character.isWhitespace(value.charAt(value.length() - 1)))) {
-                throw new IllegalArgumentException(key + " cannot have leading or trailing whitespace " +
-                    "[" + value + "]");
+            if (value.length() > 0 && (Character.isWhitespace(value.charAt(0)) || Character.isWhitespace(value.charAt(value.length() - 1)))) {
+                throw new IllegalArgumentException(key + " cannot have leading or trailing whitespace " + "[" + value + "]");
             }
             if (value.length() > 0 && "node.attr.server_name".equals(key)) {
                 try {
@@ -219,6 +222,7 @@ public abstract class Node implements Closeable {
             }
             return value;
         }, Property.NodeScope));
+
     public static final Setting<String> BREAKER_TYPE_KEY = new Setting<>("indices.breaker.type", "hierarchy", (s) -> {
         switch (s) {
             case "hierarchy":
@@ -269,14 +273,12 @@ public abstract class Node implements Closeable {
      * @param forbidPrivateIndexSettings whether or not private index settings are forbidden when creating an index; this is used in the
      *                                   test framework for tests that rely on being able to set private settings
      */
-    protected Node(
-            final Environment environment, Collection<Class<? extends Plugin>> classpathPlugins, boolean forbidPrivateIndexSettings) {
+    protected Node(final Environment environment, Collection<Class<? extends Plugin>> classpathPlugins, boolean forbidPrivateIndexSettings) {
         logger = LogManager.getLogger(Node.class);
         final List<Closeable> resourcesToClose = new ArrayList<>(); // register everything we need to release in the case of an error
         boolean success = false;
         try {
-            Settings tmpSettings = Settings.builder().put(environment.settings())
-                .put(Client.CLIENT_TYPE_SETTING_S.getKey(), CLIENT_TYPE).build();
+            Settings tmpSettings = Settings.builder().put(environment.settings()).put(Client.CLIENT_TYPE_SETTING_S.getKey(), CLIENT_TYPE).build();
 
             /*
              * Create the node environment as soon as possible so we can

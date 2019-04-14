@@ -91,6 +91,7 @@ import static java.util.Collections.unmodifiableSet;
  * A component that holds all data paths for a single node.
  */
 public final class NodeEnvironment  implements Closeable {
+
     public static class NodePath {
         /* ${data.paths}/nodes/{node.id} */
         public final Path path;

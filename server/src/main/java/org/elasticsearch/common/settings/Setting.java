@@ -140,7 +140,7 @@ public class Setting<T> implements ToXContentObject {
     protected final Function<Settings, String> defaultValue;   //
     @Nullable
     private final Setting<T> fallbackSetting;
-    private final Function<String, T> parser;
+    private final Function<String, T> parser;            // do anything you want
     private final Validator<T> validator;
     private final EnumSet<Property> properties;
 
