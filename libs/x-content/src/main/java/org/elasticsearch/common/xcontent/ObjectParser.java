@@ -226,6 +226,9 @@ public final class ObjectParser<Value, Context> extends AbstractObjectParser<Val
         }, field, ValueType.OBJECT_OR_BOOLEAN);
     }
 
+    // XContentParse
+    // ContextParse  自定义parse
+    // 解析一个 解析一个自定义 解析全部field
     @Override
     public <T> void declareNamedObjects(BiConsumer<Value, List<T>> consumer, NamedObjectParser<T, Context> namedObjectParser, Consumer<Value> orderedModeCallback, ParseField field) {
         // This creates and parses the named object

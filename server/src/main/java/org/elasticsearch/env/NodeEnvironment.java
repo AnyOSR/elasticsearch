@@ -154,6 +154,7 @@ public final class NodeEnvironment  implements Closeable {
     private final AtomicBoolean closed = new AtomicBoolean(false);
     private final Map<ShardId, InternalShardLock> shardLocks = new HashMap<>();
 
+    // nodeId
     private final NodeMetaData nodeMetaData;
 
     /**
@@ -168,7 +169,6 @@ public final class NodeEnvironment  implements Closeable {
      */
     public static final Setting<Long> NODE_ID_SEED_SETTING =
         Setting.longSetting("node.id.seed", 0L, Long.MIN_VALUE, Property.NodeScope);
-
 
     /**
      * If true the [verbose] SegmentInfos.infoStream logging is sent to System.out.
@@ -186,6 +186,7 @@ public final class NodeEnvironment  implements Closeable {
         private final Lock[] locks;
         private final NodePath[] nodePaths;
 
+        // dataFiles nodeId
         /**
          * Tries to acquire a node lock for a node id, throws {@code IOException} if it is unable to acquire it
          * @param pathFunction function to check node path before attempt of acquiring a node lock
@@ -200,7 +201,7 @@ public final class NodeEnvironment  implements Closeable {
                 final Path[] dataPaths = environment.dataFiles();
                 for (int dirIndex = 0; dirIndex < dataPaths.length; dirIndex++) {
                     Path dataDir = dataPaths[dirIndex];
-                    Path dir = resolveNodePath(dataDir, nodeId);
+                    Path dir = resolveNodePath(dataDir, nodeId);   //   dataDir/nodes/nodeId
                     if (pathFunction.apply(dir) == false) {
                         continue;
                     }
@@ -275,7 +276,7 @@ public final class NodeEnvironment  implements Closeable {
                             }
                             return true;
                         });
-                    break;
+                    break;   //成功则退出
                 } catch (LockObtainFailedException e) {
                     // ignore any LockObtainFailedException
                 } catch (IOException e) {
