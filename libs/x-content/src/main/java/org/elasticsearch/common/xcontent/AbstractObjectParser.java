@@ -34,15 +34,13 @@ import java.util.function.Consumer;
 /**
  * Superclass for {@link ObjectParser} and {@link ConstructingObjectParser}. Defines most of the "declare" methods so they can be shared.
  */
-public abstract class AbstractObjectParser<Value, Context>
-        implements BiFunction<XContentParser, Context, Value>, ContextParser<Context, Value> {
+public abstract class AbstractObjectParser<Value, Context> implements BiFunction<XContentParser, Context, Value>, ContextParser<Context, Value> {
 
     /**
      * Declare some field. Usually it is easier to use {@link #declareString(BiConsumer, ParseField)} or
      * {@link #declareObject(BiConsumer, ContextParser, ParseField)} rather than call this directly.
      */
-    public abstract <T> void declareField(BiConsumer<Value, T> consumer, ContextParser<Context, T> parser, ParseField parseField,
-            ValueType type);
+    public abstract <T> void declareField(BiConsumer<Value, T> consumer, ContextParser<Context, T> parser, ParseField parseField, ValueType type);
 
     /**
      * Declares named objects in the style of aggregations. These are named
@@ -74,8 +72,7 @@ public abstract class AbstractObjectParser<Value, Context>
      * @param parseField
      *            the field to parse
      */
-    public abstract <T> void declareNamedObjects(BiConsumer<Value, List<T>> consumer, NamedObjectParser<T, Context> namedObjectParser,
-            ParseField parseField);
+    public abstract <T> void declareNamedObjects(BiConsumer<Value, List<T>> consumer, NamedObjectParser<T, Context> namedObjectParser, ParseField parseField);
 
     /**
      * Declares named objects in the style of highlighting's field element.
@@ -129,13 +126,11 @@ public abstract class AbstractObjectParser<Value, Context>
      * @param parseField
      *            the field to parse
      */
-    public abstract <T> void declareNamedObjects(BiConsumer<Value, List<T>> consumer, NamedObjectParser<T, Context> namedObjectParser,
-            Consumer<Value> orderedModeCallback, ParseField parseField);
+    public abstract <T> void declareNamedObjects(BiConsumer<Value, List<T>> consumer, NamedObjectParser<T, Context> namedObjectParser, Consumer<Value> orderedModeCallback, ParseField parseField);
 
     public abstract String getName();
 
-    public <T> void declareField(BiConsumer<Value, T> consumer, CheckedFunction<XContentParser, T, IOException> parser,
-            ParseField parseField, ValueType type) {
+    public <T> void declareField(BiConsumer<Value, T> consumer, CheckedFunction<XContentParser, T, IOException> parser, ParseField parseField, ValueType type) {
         if (parser == null) {
             throw new IllegalArgumentException("[parser] is required");
         }
@@ -166,21 +161,21 @@ public abstract class AbstractObjectParser<Value, Context>
         declareField(consumer, p -> p.intValue(), field, ValueType.INT);
     }
 
+    // XContentParser::text  String text() throws IOException
     public void declareString(BiConsumer<Value, String> consumer, ParseField field) {
+        // // BiConsumer<Value, T> consumer, CheckedFunction<XContentParser, T, IOException> parser, ParseField parseField, ValueType type
         declareField(consumer, XContentParser::text, field, ValueType.STRING);
     }
 
     public void declareStringOrNull(BiConsumer<Value, String> consumer, ParseField field) {
-        declareField(consumer, (p) -> p.currentToken() == XContentParser.Token.VALUE_NULL ? null : p.text(), field,
-                ValueType.STRING_OR_NULL);
+        declareField(consumer, (p) -> p.currentToken() == XContentParser.Token.VALUE_NULL ? null : p.text(), field, ValueType.STRING_OR_NULL);
     }
 
     public void declareBoolean(BiConsumer<Value, Boolean> consumer, ParseField field) {
         declareField(consumer, XContentParser::booleanValue, field, ValueType.BOOLEAN);
     }
 
-    public <T> void declareObjectArray(BiConsumer<Value, List<T>> consumer, ContextParser<Context, T> objectParser,
-            ParseField field) {
+    public <T> void declareObjectArray(BiConsumer<Value, List<T>> consumer, ContextParser<Context, T> objectParser, ParseField field) {
         declareFieldArray(consumer, (p, c) -> objectParser.parse(p, c), field, ValueType.OBJECT_ARRAY);
     }
 
@@ -207,8 +202,7 @@ public abstract class AbstractObjectParser<Value, Context>
     /**
      * Declares a field that can contain an array of elements listed in the type ValueType enum
      */
-    public <T> void declareFieldArray(BiConsumer<Value, List<T>> consumer, ContextParser<Context, T> itemParser,
-                                      ParseField field, ValueType type) {
+    public <T> void declareFieldArray(BiConsumer<Value, List<T>> consumer, ContextParser<Context, T> itemParser, ParseField field, ValueType type) {
         declareField(consumer, (p, c) -> parseArray(p, () -> itemParser.parse(p, c)), field, type);
     }
 

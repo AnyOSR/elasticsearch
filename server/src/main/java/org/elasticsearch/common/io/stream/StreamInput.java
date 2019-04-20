@@ -381,7 +381,7 @@ public abstract class StreamInput extends InputStream {
         final char[] buffer = spare.chars;
         for (int i = 0; i < charCount; i++) {
             final int c = readByte() & 0xff;    // 读取一字节
-            switch (c >> 4) {   // 高四位 ascii
+            switch (c >> 4) {   // 高四位 ascii   0xxxxxxx
                 case 0:
                 case 1:
                 case 2:
@@ -392,11 +392,11 @@ public abstract class StreamInput extends InputStream {
                 case 7:
                     buffer[i] = (char) c;
                     break;
-                case 12:
-                case 13:
-                    buffer[i] = ((char) ((c & 0x1F) << 6 | readByte() & 0x3F));
+                case 12:    // 110 0xxxx   2字节 当前字节的最低五个位 后一个字节的最低六位
+                case 13:    // 110 1xxxx
+                    buffer[i] = ((char) ((c & 0x1F) << 6 | readByte() & 0x3F));   // 0011 1111
                     break;
-                case 14:
+                case 14:    // 1110        3字节 当前字节的最低四位 下一个字节的6位 最后一个字节的六位
                     buffer[i] = ((char) ((c & 0x0F) << 12 | (readByte() & 0x3F) << 6 | (readByte() & 0x3F) << 0));
                     break;
                 default:
